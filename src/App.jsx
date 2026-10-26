@@ -1,7 +1,8 @@
 import { useState } from 'react'
-//import NavBar from "./components/NavBar";
+import NavBar from "./components/Navbar";
 
-import NavBar from './components/navbar'
+
+
 import Home from './Pages/Home'
 import { Routes, Route } from 'react-router'
 import RecipeCard from './Pages/RecipeCard'
