@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from "axios";
 import RecipeCard from './RecipeCard';
 
@@ -7,19 +7,34 @@ function Home() {
   const [recipes, setRecipes] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  async function fetchRecipies() {
+  async function fetchRecipes(skipCount = 0, query = "") {
 
     try {
-      const { data } = await axios.get("https://dummyjson.com/recipes");
-      console.log(data);
-      setRecipes(data.recipes);
+      setLoading(true);
+      setErrorMsg("");
+
+      let url = `https://dummyjson.com/recipes?limit=6&skip=${skipCount}`;
+      if (query) {
+        // url = `https://dummyjson.com{skipCount}&=${encodeURIComponent(query)}`;
+        url = `https://dummyjson.com/recipes/search?limit=6&skip=${skipCount}&q=${query}`;
+      }
+      const { data } = await axios.get(url);
+      setRecipes((prev) =>
+        skipCount === 0 ? data.recipes : [...prev, ...data.recipes],
+      );
+
+      //console.log(data);
+
       //console.log(setRecipes);
       setTotal(data.total);
-      setMsg(data.msg)
+      //setMsg(data.msg)
 
     } catch (error) {
-      
+      setErrorMsg("Please try again later.");
+
     } finally {
       setLoading(false)
     }
@@ -27,52 +42,68 @@ function Home() {
   }
 
   useEffect(() => {
-    fetchRecipies()
-  }, [])
+    fetchRecipes(0, "");
+  }, []);
+
+  function handleSearch(e) {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    let query = form.get("query").trim() || "";
+    setSearchQuery(query);
+    fetchRecipes(0, query)
+
+  }
 
 
 
   return (
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      <form
+        onSubmit={handleSearch}
+        className="flex gap-2 max-w-md mx-auto mb-8"
+      >
+        <input
+          type="text"
+          name="query"
+          placeholder="Search recipes..."
+          className="flex-1 border border-border rounded px-3 py-2 bg-card text-text outline-none focus:border-accent"
+        />
+        <button
+          type="submit"
+          className="bg-accent hover:bg-accent-hover text-white rounded px-4 py-2 font-medium"
+        >
+          Search
+        </button>
+      </form>
 
-    loading ? (
-      <p className="text-center text-lg" > Loading...</p>) : (<main className="max-w-6xl mx-auto px-4 py-8">
+      {loading && <p className="text-center py-6 text-muted">Loading...</p>}
+      {!loading && recipes.length === 0 && (
+        <p className="text-center py-6 text-muted">`No recipes found for '${searchQuery}'</p>
+      )}
 
-        <form className="flex gap-2 max-w-md mx-auto mb-8">
-          <input
-            type="text"
-            placeholder="Search recipes..."
-            className="flex-1 border border-border rounded px-3 py-2 bg-card text-text outline-none focus:border-accent"
-          />
-          <button type="button" className="bg-accent hover:bg-accent-hover text-white rounded px-4 py-2 font-medium">
-            Search
-          </button>
-        </form>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {recipes.map((recipe) => (
+          <RecipeCard key={recipe.id} recipe={recipe} />
+        ))}
+      </div>
 
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
-
-
+      {recipes.length < total && (
         <div className="text-center mt-8">
           <button
             type="button"
-            className="bg-accent hover:bg-accent-hover text-white rounded px-6 py-2 font-medium"
+            onClick={() => fetchRecipes(recipes.length, searchQuery)}
+            className="bg-accent hover:bg-accent-hover text-white rounded px-6 py-2 font-medium cursor: pointer"
           >
             Load More
           </button>
         </div>
-
-
-      </main>
-    ))
-
+      )}
+    </main>
+  );
 
 }
 
 
 
 
-export default Home
+export default Home;

@@ -15,8 +15,8 @@ function RecipeCard({ recipe }) {
     const totalTime = prepTimeMinutes + cookTimeMinutes;
 
     return (
-        <Link
-            href="#"
+        <Link to={`/recipe/${id}`}
+
             className="bg-card border border-border rounded-md hover:border-accent overflow-hidden flex flex-col"
         >
             <img
